@@ -240,9 +240,10 @@ or `ansi1` when the action or the chosen mode destroys something.
   label, the remote menu (Checkout, Merge, Delete remote branch, Copy name); on
   a tag, Delete, Push, Copy name; anywhere else, the commit menu (Add tag,
   Create branch, Checkout, Cherry pick, Revert, Merge, Rebase, Reset, Copy hash,
-  Copy subject; Checkout, Cherry pick, Merge and Rebase left out on HEAD); on the
+  Copy subject, Copy full message; Checkout, Cherry pick, Merge and Rebase left out on HEAD); on the
   uncommitted row: Commit, Stash, Reset uncommitted changes, Show in Changes panel.
-  Push needs a remote.
+  Copy full message reads the subject and body from the selected repository; a read
+  failure leaves the clipboard unchanged. Push needs a remote.
 - **Actions** run as argv, stopping at the first failure. With no dialog
   (checkout of a local branch, copy, show Changes) the menu runs it, then closes.
   Otherwise a dialog asks: create branch (name, check out), add tag (name,
