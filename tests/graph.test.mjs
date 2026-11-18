@@ -30,6 +30,12 @@ assert.equal(geometry.at(-1).right, 500);
 assert.equal(targetColumn(geometry, "graph", 10), "graph");
 assert.equal(targetColumn(geometry, "graph", -100), "date");
 assert.equal(targetColumn(geometry, "graph", 500), "hash");
+const hidden = ["graph", "date", "hash"];
+const hiddenBounds = columnBounds(normalizeOrder(), true, 500, { graph: 60, date: 62, author: 120, hash: 66 }, 4, hidden);
+assert.deepEqual(hiddenBounds.map((b) => [b.key, b.left, b.right]), [["graph", 0, 60], ["date", 64, 126], ["hash", 130, 196]]);
+assert.equal(targetColumn(hiddenBounds, "graph", 140), "hash");
+assert.deepEqual(moveColumn(normalizeOrder(), true, "graph", "hash", hidden), ["date", "description", "hash", "author", "graph"]);
+assert.deepEqual(columnBounds(normalizeOrder(), false, 500, { graph: 60, date: 62, author: 120, hash: 66 }, 4, ["hash"]).map((b) => b.key), ["hash"]);
 console.log("column order ok");
 
 const env = { ...process.env, GIT_AUTHOR_NAME: "T", GIT_AUTHOR_EMAIL: "t@t", GIT_COMMITTER_NAME: "T", GIT_COMMITTER_EMAIL: "t@t", GIT_CONFIG_GLOBAL: "/dev/null" };

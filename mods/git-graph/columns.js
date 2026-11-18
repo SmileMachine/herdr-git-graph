@@ -20,16 +20,16 @@ export function visibleOrder(order, wide, visibility = null) {
   return all.filter((key) => wide || (key !== "author" && key !== "hash"));
 }
 // Coordinates are relative to the start of the row; its right padding is excluded.
-export function columnBounds(order, wide, width, widths, gap) {
-  const keys = visibleOrder(order, wide);
+export function columnBounds(order, wide, width, widths, gap, visibility = null) {
+  const keys = visibleOrder(order, wide, visibility);
   const fixed = keys.reduce((sum, key) => sum + (key === "description" ? 0 : widths[key]), 0);
   const description = Math.max(0, width - fixed - gap * (keys.length - 1));
   let x = 0;
   return keys.map((key) => { const w = key === "description" ? description : widths[key]; const result = { key, left: x, right: x + w }; x += w + gap; return result; });
 }
 // Move only among visible columns: hidden columns retain their slots at narrow widths.
-export function moveColumn(order, wide, key, target) {
-  const all = normalizeOrder(order), visible = visibleOrder(all, wide);
+export function moveColumn(order, wide, key, target, visibility = null) {
+  const all = normalizeOrder(order), visible = visibleOrder(all, wide, visibility);
   if (!visible.includes(key) || !visible.includes(target) || key === target) return all;
   const next = visible.filter((k) => k !== key);
   next.splice(visible.indexOf(target), 0, key);
