@@ -17,6 +17,7 @@ One column on the `background` color, the radius of the shown tab's panes (its
 `pane.radius`; square when the layout sets none), 1px `border`, base type 12.5px.
 Top to bottom:
 
+- Header controls show Herdr tooltips on hover and provide accessibility labels.
 - **Header**, 42px, 14px side padding, bottom border. The tool's name at 13px
   semibold: "Git" for a repository, "Manygit" for a folder of them (see
   **Manygit** below). A repository opened from the Manygit list shows a back
