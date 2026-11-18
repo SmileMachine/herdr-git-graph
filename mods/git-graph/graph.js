@@ -5,7 +5,7 @@ import { div, svg, PathBuilder } from "gpui-kit";
 import { v_flex, h_flex, Scrollbar, v_virtual_list } from "gpui-base";
 import { spaces, panes, focused, layout, exec, watchFolder, readTextFile, theme, settings, props, shared, setShared, openOverlay, home, notify, knownAgents, updates } from "herdr";
 import { layoutLanes } from "./lanes.js";
-import { normalizeOrder, visibleOrder, columnBounds, moveColumn, targetColumn } from "./columns.js";
+import { DEFAULT_ORDER, normalizeOrder, normalizeVisibility, visibleOrder, columnBounds, moveColumn, targetColumn } from "./columns.js";
 import { READ, STATUS, UNCOMMITTED, LABEL, logArgs, parseLog, parseStatus, withUncommitted, labelsOf, hitLabel,
   menuFor, menuHeight, fileArgs, joinFiles, diffArgs, diffRows } from "./git.js";
 import { perform, openDialog, showChanges } from "./act.js";
@@ -148,7 +148,7 @@ export class Graph {
     this.diffId = `${this.listId}-diff`;
     this.all = true; this.remotes = true; this.wide = false; this.graphMax = 160; this.scale = null;
     this.watchToken = 0; this.seenChange = shared("git-graph.changed");
-    this.cols = withDefaults(); this.order = normalizeOrder(); this.drag = null;
+    this.cols = withDefaults(); this.order = normalizeOrder(); this.visibility = normalizeVisibility(); this.drag = null;
     this.detail = Number(shared("git-graph.details")) || 0; this.seenDetail = this.detail;
     this.seen = new Map(); this.commitDetails = new Map();
     // Fetch all: its progress for one Manygit folder, and each repository's last failure.
@@ -431,7 +431,7 @@ export class Graph {
   }
 
   graphWidth() { return this.cols.graph ? this.clampColumn("graph", this.cols.graph) : Math.min(Math.max(GRAPH_MIN, PAD * 2 + this.lanes * LANE), this.graphMax); }
-  visibleColumns() { return visibleOrder(this.order, this.wide); }
+  visibleColumns() { return visibleOrder(this.order, this.wide, this.visibility); }
   bounds() { return columnBounds(this.order, this.wide, Math.max(0, (this.width ?? 0) - 12), { ...this.cols, graph: this.graphWidth() }, LABEL.GAP); }
   startReorder(key, e, cx) {
     cx.stop_propagation();
@@ -478,6 +478,11 @@ export class Graph {
   }
 
   saveColumns() { this.seenCols = JSON.stringify(this.cols); setShared("git-graph.columns", this.cols); }
+
+  openColumnMenu(cx) {
+    openOverlay({ mod: "git-graph", kind: "popup", at: "pointer", width: 268, height: menuHeight(DEFAULT_ORDER.map(() => ({}))), props: { role: "columns" } });
+    cx.stop_propagation();
+  }
 
   // The details strip's height (it holds the diff too): a dragged height, else what the list leaves.
   clampDetail(h) {
@@ -819,6 +824,7 @@ export class Graph {
     const ghostWidth = origin ? Math.min(140, Math.max(50, origin.right - origin.left)) : 0;
     const ghostLeft = origin ? Math.max(0, Math.min((this.width ?? 0) - ghostWidth, origin.left + (origin.right - origin.left - ghostWidth) / 2 + drag.delta)) : 0;
     return div().relative().h(24).flex_none().w_full()
+      .on_mouse_down("right", (_e, cx) => this.openColumnMenu(cx))
       .child(h_flex().size_full().pr(10).items_center().border_b(1).border_color(t.border).text_size(11).text_color(t.dim).children(children))
       .when(Boolean(destination), (e) => e.child(div().absolute().left(destination.left).bottom(0).w(Math.max(1, destination.right - destination.left)).h(2).bg(t.accent)))
       .when(Boolean(drag && origin), (e) => e.child(div().absolute().left(ghostLeft).top(1).w(ghostWidth).h(22).px(6).rounded(4)
@@ -941,6 +947,8 @@ export class Graph {
     if (!this.drag && seen !== this.seenCols) { this.seenCols = seen; this.cols = withDefaults(savedCols); }
     const savedOrder = shared("git-graph.column-order"), orderSeen = JSON.stringify(savedOrder ?? null);
     if (!this.drag && orderSeen !== this.seenOrder) { this.seenOrder = orderSeen; this.order = normalizeOrder(savedOrder); }
+    const savedVisibility = shared("git-graph.column-visibility"), visibilitySeen = JSON.stringify(savedVisibility ?? null);
+    if (!this.drag && visibilitySeen !== this.seenVisibility) { this.seenVisibility = visibilitySeen; this.visibility = normalizeVisibility(savedVisibility); }
     const savedDetail = Number(shared("git-graph.details")) || 0;
     if (!this.drag && savedDetail !== this.seenDetail) { this.seenDetail = savedDetail; this.detail = savedDetail; }
     const fetched = shared("git-graph.fetched");

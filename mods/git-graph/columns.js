@@ -1,11 +1,23 @@
 // Shared column ordering and geometry, independent of the renderer.
 export const DEFAULT_ORDER = ["graph", "description", "date", "author", "hash"];
+export const COLUMN_TITLES = { graph: "Graph", description: "Description", date: "Date", author: "Author", hash: "Commit" };
 export function normalizeOrder(saved) {
   const valid = Array.isArray(saved) ? saved.filter((key, i) => DEFAULT_ORDER.includes(key) && saved.indexOf(key) === i) : [];
   return [...valid, ...DEFAULT_ORDER.filter((key) => !valid.includes(key))];
 }
-export function visibleOrder(order, wide) {
-  return normalizeOrder(order).filter((key) => wide || (key !== "author" && key !== "hash"));
+export function normalizeVisibility(saved) {
+  const valid = Array.isArray(saved) ? saved.filter((key, i) => DEFAULT_ORDER.includes(key) && saved.indexOf(key) === i) : [];
+  return valid.length ? valid : [...DEFAULT_ORDER];
+}
+export function visibleOrder(order, wide, visibility = null) {
+  const all = normalizeOrder(order);
+  if (visibility) {
+    const enabled = new Set(normalizeVisibility(visibility));
+    const selected = all.filter((key) => enabled.has(key));
+    const shown = wide ? selected : selected.filter((key) => key !== "author" && key !== "hash");
+    return shown.length ? shown : selected.slice(0, 1);
+  }
+  return all.filter((key) => wide || (key !== "author" && key !== "hash"));
 }
 // Coordinates are relative to the start of the row; its right padding is excluded.
 export function columnBounds(order, wide, width, widths, gap) {
