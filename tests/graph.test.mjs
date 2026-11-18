@@ -2,6 +2,7 @@
 // included): parsing, labels and where they sit, lanes, menus, validation,
 // and every action the menus run. Run: node tests/graph.test.mjs
 import { readCommitMessage } from "../mods/git-graph/copy-message.js";
+import { normalizeOrder, visibleOrder, columnBounds, moveColumn, targetColumn } from "../mods/git-graph/columns.js";
 import * as G from "../mods/git-graph/git.js";
 import { layoutLanes } from "../mods/git-graph/lanes.js";
 import * as R from "../mods/git-graph/repos.js";
@@ -11,6 +12,20 @@ import { execFileSync, spawnSync } from "node:child_process";
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, rmSync, statSync, symlinkSync, unlinkSync } from "node:fs";
 import { join } from "node:path";
 import assert from "node:assert/strict";
+
+// Ordering stays valid across saved data, narrow panels, and drags in either direction.
+assert.deepEqual(normalizeOrder(["date", "date", "bad"]), ["date", "graph", "description", "author", "hash"]);
+const reordered = moveColumn(normalizeOrder(), true, "date", "graph");
+assert.deepEqual(reordered, ["date", "graph", "description", "author", "hash"]);
+assert.deepEqual(moveColumn(reordered, false, "description", "date"), ["description", "date", "graph", "author", "hash"]);
+assert.deepEqual(visibleOrder(reordered, false), ["date", "graph", "description"]);
+const geometry = columnBounds(reordered, true, 500, { graph: 60, date: 62, author: 120, hash: 66 }, 4);
+assert.equal(geometry.find(c => c.key === "description").left, 130);
+assert.equal(geometry.at(-1).right, 500);
+assert.equal(targetColumn(geometry, "graph", 10), "graph");
+assert.equal(targetColumn(geometry, "graph", -100), "date");
+assert.equal(targetColumn(geometry, "graph", 500), "hash");
+console.log("column order ok");
 
 const env = { ...process.env, GIT_AUTHOR_NAME: "T", GIT_AUTHOR_EMAIL: "t@t", GIT_COMMITTER_NAME: "T", GIT_COMMITTER_EMAIL: "t@t", GIT_CONFIG_GLOBAL: "/dev/null" };
 const sh = (cwd, ...args) => execFileSync("git", args, { cwd, env, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
