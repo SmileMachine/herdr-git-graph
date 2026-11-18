@@ -1,6 +1,7 @@
 // Tests the mod's git logic against real throwaway repos (a bare "remote"
 // included): parsing, labels and where they sit, lanes, menus, validation,
 // and every action the menus run. Run: node tests/graph.test.mjs
+import { readCommitMessage } from "../mods/git-graph/copy-message.js";
 import * as G from "../mods/git-graph/git.js";
 import { layoutLanes } from "../mods/git-graph/lanes.js";
 import * as R from "../mods/git-graph/repos.js";
@@ -130,6 +131,21 @@ const items = G.menuFor({ kind: "commit", commit: commits.find((c) => c.subject 
 assert.ok(!items[0].separator && !items.at(-1).separator && items.every((it, i) => !(it.separator && items[i + 1]?.separator)), "separators only between sections");
 assert.equal(G.menuHeight(items), 10 + items.filter((i) => !i.separator).length * 30 + items.filter((i) => i.separator).length * 9);
 assert.ok(labelsIn(G.menuFor({ kind: "tag", name: "v1", commit: tip }, { ...ctx, remotes: [] })).every((l) => !l.startsWith("Push")), "no push without remotes");
+const copyMessage = items.find((i) => i.action?.type === "copyMessage");
+assert.equal(copyMessage.label, "Copy full commit message");
+assert.equal(copyMessage.action.hash, commits.find((c) => c.subject === "two").hash);
+const execGit = async (cmd, args, opts) => { assert.equal(cmd, "git"); return git(opts.cwd, args); };
+sh(repo, "commit", "--allow-empty", "-m", "message subject", "-m", "first line\n\nsecond line");
+const messageHash = sh(repo, "rev-parse", "HEAD").trim();
+const fullMessage = await readCommitMessage(messageHash, { root: repo, on: null }, execGit);
+assert.equal(fullMessage.ok, true);
+assert.equal(fullMessage.text, "message subject\n\nfirst line\n\nsecond line\n");
+let calls = 0;
+assert.equal((await readCommitMessage("--help", { root: repo }, () => { calls++; })).ok, false);
+assert.equal(calls, 0);
+assert.equal((await readCommitMessage("0".repeat(40), { root: repo }, execGit)).ok, false);
+assert.equal((await readCommitMessage(messageHash, { root: repo }, async () => { throw new Error("offline"); })).message, "offline");
+sh(repo, "reset", "--hard", "HEAD^");
 console.log("menus ok");
 
 // ---- validation: names never become options
