@@ -432,7 +432,7 @@ export class Graph {
 
   graphWidth() { return this.cols.graph ? this.clampColumn("graph", this.cols.graph) : Math.min(Math.max(GRAPH_MIN, PAD * 2 + this.lanes * LANE), this.graphMax); }
   visibleColumns() { return visibleOrder(this.order, this.wide, this.visibility); }
-  bounds() { return columnBounds(this.order, this.wide, Math.max(0, (this.width ?? 0) - 12), { ...this.cols, graph: this.graphWidth() }, LABEL.GAP); }
+  bounds() { return columnBounds(this.order, this.wide, Math.max(0, (this.width ?? 0) - 12), { ...this.cols, graph: this.graphWidth() }, LABEL.GAP, this.visibility); }
   startReorder(key, e, cx) {
     cx.stop_propagation();
     this.drag = { axis: "reorder", key, x: e.position.x, order: this.order, bounds: this.bounds(), moved: false };
@@ -445,7 +445,7 @@ export class Graph {
 
   startDrag(key, e, cx) {
     cx.stop_propagation();
-    if (e.click_count < 2) { this.drag = { key, x: e.position.x, from: key === "graph" ? this.graphWidth() : this.cols[key], side: this.visibleColumns().indexOf(key) < this.visibleColumns().indexOf("description") ? 1 : -1 }; return; }
+    if (e.click_count < 2) { this.drag = { key, x: e.position.x, from: key === "graph" ? this.graphWidth() : this.cols[key], side: !this.visibleColumns().includes("description") || this.visibleColumns().indexOf(key) < this.visibleColumns().indexOf("description") ? 1 : -1 }; return; }
     if (this.cols[key] !== COLUMNS[key].width) { this.cols = { ...this.cols, [key]: COLUMNS[key].width }; this.saveColumns(); cx.notify(); }
   }
 
@@ -457,7 +457,7 @@ export class Graph {
       if (Math.abs(delta) < 5 && !d.moved) return;
       d.moved = true; d.delta = delta;
       const target = targetColumn(d.bounds, d.key, delta);
-      this.order = moveColumn(d.order, this.wide, d.key, target);
+      this.order = moveColumn(d.order, this.wide, d.key, target, this.visibility);
       cx.notify(); return;
     }
     if (d.axis === "y") {
@@ -815,7 +815,7 @@ export class Graph {
       .on_mouse_down("left", (e, cx) => this.startReorder(key, e, cx)).child(titles[key]);
     const children = [];
     order.forEach((key, i) => {
-      if (i > 0) children.push(handle(i <= description ? order[i - 1] : key));
+      if (i > 0) children.push(handle(description < 0 || i <= description ? order[i - 1] : key));
       children.push(head(key));
     });
     const drag = this.drag?.axis === "reorder" && this.drag.moved ? this.drag : null;
