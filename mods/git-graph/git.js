@@ -188,7 +188,8 @@ export function menuFor(target, ctx) {
         !here && item(`Rebase ${cur} on this commit…`, "rebase", { type: "rebase", ref: hash, what: `commit ${short}` }),
         item(`Reset ${cur} to this commit…`, "reset", { type: "reset", hash, short })),
       section(item("Copy commit hash", "copy", { type: "copy", text: hash }),
-        item("Copy commit subject", "copy", { type: "copy", text: c.subject })),
+        item("Copy commit subject", "copy", { type: "copy", text: c.subject }),
+        item("Copy full commit message", "copy", { type: "copyMessage", hash })),
     ];
   }
   const out = [];
