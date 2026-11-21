@@ -167,11 +167,21 @@ real git. The UI was checked in an isolated Herdr window (`HERDR_APP_HOME` and
 
 ## Contributing
 
-Pull requests are welcome.
+Pull requests are welcome, written by hand or with an agent. The same rules
+apply to both.
 
+- **Titles are conventional commits in plain language**, saying what changes:
+  `fix(manygit): a plain repository is no longer searched on every refresh`.
+  That goes for the PR title, which becomes the squashed commit, and for each
+  commit.
+- **The body** gives the problem in a sentence or two, then how you fixed it.
+  End with the model and harness that did the work (`Made with Claude Opus 5.5
+  in Claude Code`), or say you wrote it by hand.
+- **UI changes need before and after images. Motion or timing needs a short
+  video.** Upload them to GitHub by dragging them into the PR description.
+  Never commit PR-only screenshots or assets, such as `.github/pr-assets/`.
+- **One request is one PR.** Split it only when the maintainer asks.
 - Run `npm test` and say in the PR that it passes.
-- **If the change shows on screen, add a screenshot**, before and after when it
-  fixes something you can see. It's the fastest way to review a UI change.
 - Say which Herdr version and OS you tested on, and the zoom if it isn't 1.
 - Update `RECIPE.md` when behavior changes, so the recipe still builds what the
   mod does.
