@@ -8,7 +8,7 @@ import * as R from "../mods/git-graph/repos.js";
 import { executeAction } from "../mods/git-graph/execute.js";
 import { tmpdir } from "node:os";
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, rmSync, statSync, symlinkSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, rmSync, statSync, symlinkSync, unlinkSync } from "node:fs";
 import { join } from "node:path";
 import assert from "node:assert/strict";
 
@@ -351,7 +351,7 @@ rmSync(base, { recursive: true, force: true });
   // A folder reached through a symlink (macOS's /tmp, a symlinked checkout) is searched too.
   const link = `${ws}-link`; symlinkSync(ws, link);
   assert.deepEqual(R.parseFound(link, spawnSync("find", R.findArgs(link, 3), { encoding: "utf8" }).stdout).map((r) => r.name), ["a", "b", "c"], "symlinked folder");
-  rmSync(link);
+  unlinkSync(link);
   // Not searched: a home, anything above one, and another machine's usual homes.
   for (const [dir, home, skip] of [["/", "/Users/me", true], ["/Users", "/Users/me", true], ["/Users/me/", "/Users/me", true],
     ["/Users/me/code", "/Users/me", false], ["/home/dev", null, true], ["/root", null, true], ["/mnt/data/dev-vera", null, false], ["/home/dev/work", null, false]]) {
